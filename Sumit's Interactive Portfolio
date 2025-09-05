@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sumit - Trinity College of Engineering and Research</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0a0a0a;
+            color: #e5e7eb;
+            overflow-x: hidden;
+        }
+
+        /* --- Animated Background --- */
+        #interactive-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* --- Glassmorphism Effect --- */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+
+        /* --- Scroll Animation --- */
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Custom delay classes */
+        .delay-100 { transition-delay: 100ms; }
+        .delay-200 { transition-delay: 200ms; }
+        .delay-300 { transition-delay: 300ms; }
+        .delay-400 { transition-delay: 400ms; }
+        .delay-500 { transition-delay: 500ms; }
+
+        /* --- Button Glow Effect --- */
+        .glow-btn {
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        .glow-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 300px;
+            background: conic-gradient(
+                from 0deg,
+                #89f7fe, #66a6ff, #4776e6, #8e54e9, #ff6b6b, #feca57, #89f7fe
+            );
+            animation: rotate 4s linear infinite;
+            transform: translate(-50%, -50%);
+            opacity: 0.3;
+            filter: blur(20px);ac
+            z-index: -1;
+            transition: opacity 0.3s ease;
+        }
+        .glow-btn:hover::before {
+            opacity: 0.6;
+        }
+        
+        /* Typing effect */
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1em;
+            background-color: #66a6ff;
+            animation: blink 0.7s infinite;
+            margin-left: 4px;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        @keyframes rotate {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="w-full">
+    <canvas id="interactive-bg"></canvas>
+
+    <header class="fixed top-0 left-0 right-0 z-50 p-4 transition-all duration-300" id="navbar">
+        <nav class="container mx-auto flex justify-between items-center glass-card p-3">
+            <a href="#" class="text-2xl font-bold tracking-wider">Sumit.dev</a>
+            <div class="hidden md:flex space-x-8 text-lg items-center">
+                <a href="#about" class="hover:text-[#89f7fe] transition-colors">About</a>
+                <a href="#projects" class="hover:text-[#89f7fe] transition-colors">Projects</a>
+                <a href="#skills" class="hover:text-[#89f7fe] transition-colors">Skills</a>
+                <a href="#contact" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-all duration-300 transform hover:scale-105">Contact</a>
+            </div>
+            <button class="md:hidden text-2xl" id="mobile-menu-btn">☰</button>
+        </nav>
+    </header>
+    
+    <main class="container mx-auto px-6 pt-32">
+
+        <!-- Hero Section -->
+        <section class="h-screen min-h-[600px] flex flex-col justify-center items-center text-center">
+            <h1 class="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight">
+                <span class="bg-clip-text text-transparent bg-gradient-to-r from-[#89f7fe] to-[#66a6ff]">
+                    Sumit
+                </span>
+                <br>
+                <span class="text-3xl md:text-4xl lg:text-5xl text-gray-300">
+                    Trinity College of Engineering and Research
+                </span>
+            </h1>
+            <p id="typing-text" class="text-2xl md:text-3xl mt-6 text-gray-300"></p>
+            <a href="#projects" class="mt-12 glow-btn bg-black text-white font-bold text-xl py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-105">
+                View My Work
+            </a>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-24">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div class="reveal">
+                    <img src="https://placehold.co/600x600/1a1a1a/66a6ff?text=Sumit" alt="Sumit Tcoer Dev" class="rounded-full shadow-2xl shadow-blue-500/20 w-3/4 mx-auto md:w-full">
+                </div>
+                <div class="reveal delay-200">
+                    <h2 class="text-4xl font-bold mb-4">About Me</h2>
+                    <p class="text-lg text-gray-400 leading-relaxed">
+                        I am a passionate and creative web developer with a knack for building beautiful, functional, and highly animated user interfaces. With a strong foundation in modern web technologies, I specialize in bringing ideas to life with clean code and pixel-perfect design.
+                        <br><br>
+                        My goal is to create web experiences that are not only user-friendly but also memorable and engaging. Let's build something amazing together.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects" class="py-24">
+            <h2 class="text-4xl font-bold text-center mb-16 reveal">My Projects</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Project Card 1 -->
+                <div class="glass-card p-6 reveal hover:-translate-y-2 transition-transform duration-300">
+                    <img src="https://placehold.co/600x400/111111/89f7fe?text=E-commerce+Site" alt="E-commerce Platform" class="rounded-lg mb-4">
+                    <h3 class="text-2xl font-semibold mb-2">E-commerce Platform</h3>
+                    <p class="text-gray-400">A full-stack e-commerce site with a sleek UI, product management, and a secure checkout process.</p>
+                </div>
+                <!-- Project Card 2 -->
+                <div class="glass-card p-6 reveal delay-200 hover:-translate-y-2 transition-transform duration-300">
+                    <img src="https://placehold.co/600x400/111111/66a6ff?text=Chat+Application" alt="Real-Time Chat App" class="rounded-lg mb-4">
+                    <h3 class="text-2xl font-semibold mb-2">Real-Time Chat App</h3>
+                    <p class="text-gray-400">A WebSocket-based chat application allowing for instant communication and group chats.</p>
+                </div>
+                <!-- Project Card 3 -->
+                <div class="glass-card p-6 reveal delay-400 hover:-translate-y-2 transition-transform duration-300">
+                    <img src="https://placehold.co/600x400/111111/8e54e9?text=Analytics+Dashboard" alt="Data Visualization Dashboard" class="rounded-lg mb-4">
+                    <h3 class="text-2xl font-semibold mb-2">Data Visualization Dashboard</h3>
+                    <p class="text-gray-400">An interactive dashboard for visualizing complex data sets with dynamic charts and filters.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Skills Section -->
+        <section id="skills" class="py-24">
+            <h2 class="text-4xl font-bold text-center mb-16 reveal">Technical Skills</h2>
+            <div class="flex flex-wrap justify-center items-center gap-8">
+                <div class="glass-card p-6 flex flex-col items-center gap-2 reveal delay-100 w-32 h-32 justify-center">
+                    <svg class="w-12 h-12" fill="#E44D26" viewBox="0 0 24 24"><path d="M1.364 2.136l1.818 20.455h17.636l1.818-20.455h-21.272zM12 18.273h-3.455l-.364-4.091h3.819v-2.182h-6.182l.364 4.091h5.818v2.182zM15.455 12h-3.455v2.182h3.091l-.364 4.091h-2.727v2.182h5.455l.727-8.273h-2.727v-0.182z"/></svg>
+                    <span>HTML5</span>
+                </div>
+                <div class="glass-card p-6 flex flex-col items-center gap-2 reveal delay-200 w-32 h-32 justify-center">
+                    <svg class="w-12 h-12" fill="#264DE4" viewBox="0 0 24 24"><path d="M1.364 2.136l1.818 20.455h17.636l1.818-20.455h-21.272zM18.636 18.273h-5.455v-2.182h2.727l.364-4.091h-3.091v-2.182h5.818l-.364 8.455zM12 18.273h-3.091l-.364-4.091h3.455v-2.182h-5.818l.364 8.273h5.455v-2.182z"/></svg>
+                    <span>CSS3</span>
+                </div>
+                <div class="glass-card p-6 flex flex-col items-center gap-2 reveal delay-300 w-32 h-32 justify-center">
+                     <svg class="w-12 h-12" fill="#F0DB4F" viewBox="0 0 24 24"><path d="M0 0h24v24h-24v-24zM21.818 21.818h-19.636v-19.636h19.636v19.636zM15.455 16.364c.545.909 1.455 1.455 2.545 1.455.909 0 1.636-.364 1.636-1.273 0-.909-.727-1.273-1.818-1.818l-.909-.364c-1.636-.727-2.182-1.636-2.182-3.091 0-1.636 1.273-2.909 3.091-2.909 1.273 0 2.364.545 2.909 1.455l-1.273.909c-.364-.545-1.091-.909-1.636-.909s-1.091.364-1.091 1.091c0 .727.545 1.091 1.636 1.455l.909.364c2.182.909 2.545 2 2.545 3.273 0 1.818-1.455 3.273-3.455 3.273-1.818 0-3.091-1.091-3.636-2l1.273-.909zM9.455 16.545c.545 0 .909-.364.909-.909v-6.364h1.455v6.545c0 1.455-1.091 2.182-2.545 2.182-1.455 0-2.364-.727-2.727-1.636l1.273-.727c.182.545.727.909 1.273.909z"/></svg>
+                    <span>JavaScript</span>
+                </div>
+                <div class="glass-card p-6 flex flex-col items-center gap-2 reveal delay-400 w-32 h-32 justify-center">
+                    <svg class="w-12 h-12" fill="#61DAFB" viewBox="0 0 24 24"><path d="M12 2c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm-2.293-8.293l-1.414 1.414 3.707 3.707 1.414-1.414-3.707-3.707zm4.586-4.586l-1.414 1.414 3.707 3.707 1.414-1.414-3.707-3.707zm-2.293 6.586l3.707-3.707 1.414 1.414-3.707 3.707-1.414-1.414z"/></svg>
+                    <span>React</span>
+                </div>
+                 <div class="glass-card p-6 flex flex-col items-center gap-2 reveal delay-500 w-32 h-32 justify-center">
+                    <svg class="w-12 h-12" fill="#339933" viewBox="0 0 24 24"><path d="M12 2c-5.523 0-10 4.477-10 10s4.477 10 10 10 10-4.477 10-10-4.477-10-10-10zm-1.091 14.545l-3.273-3.273 1.091-1.091 2.182 2.182 4.909-4.909 1.091 1.091-6 6z"/></svg>
+                    <span>Node.js</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="py-24 text-center">
+            <div class="reveal">
+                <h2 class="text-4xl font-bold mb-4">Get In Touch</h2>
+                <p class="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
+                    I'm currently available for freelance work and open to discussing new projects. Feel free to reach out!
+                </p>
+                <a href="mailto:sumitwagdare8@gmail.com" class="glow-btn bg-black text-white font-bold text-xl py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-105">
+                    sumitwagdare8@gmail.com
+                </a>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="text-center text-gray-500 text-sm py-8">
+        <p>&copy; 2025 sumit tcoer dev. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Interactive Background ---
+            const canvas = document.getElementById('interactive-bg');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            let mouse = { x: null, y: null, radius: 150 };
+            window.addEventListener('mousemove', (event) => {
+                mouse.x = event.x;
+                mouse.y = event.y;
+            });
+            window.addEventListener('mouseout', () => {
+                mouse.x = undefined;
+                mouse.y = undefined;
+            });
+
+            let particlesArray = [];
+            const particleCount = 100;
+
+            class Particle {
+                constructor(x, y, directionX, directionY, size, color) {
+                    this.x = x;
+                    this.y = y;
+                    this.directionX = directionX;
+                    this.directionY = directionY;
+                    this.size = size;
+                    this.color = color;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                }
+                update() {
+                    if (this.x > canvas.width || this.x < 0) {
+                        this.directionX = -this.directionX;
+                    }
+                    if (this.y > canvas.height || this.y < 0) {
+                        this.directionY = -this.directionY;
+                    }
+                    let dx = mouse.x - this.x;
+                    let dy = mouse.y - this.y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < mouse.radius + this.size) {
+                        if (mouse.x < this.x && this.x < canvas.width - this.size * 10) { this.x += 5; }
+                        if (mouse.x > this.x && this.x > this.size * 10) { this.x -= 5; }
+                        if (mouse.y < this.y && this.y < canvas.height - this.size * 10) { this.y += 5; }
+                        if (mouse.y > this.y && this.y > this.size * 10) { this.y -= 5; }
+                    }
+                    this.x += this.directionX;
+                    this.y += this.directionY;
+                    this.draw();
+                }
+            }
+
+            function initParticles() {
+                particlesArray = [];
+                let numberOfParticles = (canvas.height * canvas.width) / 9000;
+                for (let i = 0; i < numberOfParticles; i++) {
+                    let size = (Math.random() * 2) + 1;
+                    let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                    let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                    let directionX = (Math.random() * .4) - .2;
+                    let directionY = (Math.random() * .4) - .2;
+                    let color = 'rgba(102, 166, 255, 0.5)';
+                    particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+                }
+            }
+
+            function animateParticles() {
+                requestAnimationFrame(animateParticles);
+                ctx.clearRect(0, 0, innerWidth, innerHeight);
+                for (let i = 0; i < particlesArray.length; i++) {
+                    particlesArray[i].update();
+                }
+            }
+
+            initParticles();
+            animateParticles();
+
+            window.addEventListener('resize', () => {
+                canvas.width = innerWidth;
+                canvas.height = innerHeight;
+                mouse.radius = 150;
+                initParticles();
+            });
+
+            // --- Typing Effect ---
+            const typingElement = document.getElementById('typing-text');
+            const words = ["Creative Web Developer", "UI/UX Enthusiast", "Problem Solver"];
+            let wordIndex = 0;
+            let charIndex = 0;
+            let isDeleting = false;
+
+            function type() {
+                const currentWord = words[wordIndex];
+                let displayText = currentWord.substring(0, charIndex);
+                typingElement.innerHTML = `${displayText}<span class="typing-cursor"></span>`;
+                
+                if (!isDeleting && charIndex < currentWord.length) {
+                    charIndex++;
+                    setTimeout(type, 100);
+                } else if (isDeleting && charIndex > 0) {
+                    charIndex--;
+                    setTimeout(type, 50);
+                } else {
+                    isDeleting = !isDeleting;
+                    if (!isDeleting) {
+                        wordIndex = (wordIndex + 1) % words.length;
+                    }
+                    setTimeout(type, 1200);
+                }
+            }
+            type();
+
+            // --- Scroll Animations ---
+            const revealElements = document.querySelectorAll('.reveal');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            revealElements.forEach(el => observer.observe(el));
+            
+            // --- Navbar scroll effect ---
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('glass-card');
+                    navbar.classList.add('p-2');
+                } else {
+                    navbar.classList.remove('glass-card');
+                    navbar.classList.remove('p-2');
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
+
+
+

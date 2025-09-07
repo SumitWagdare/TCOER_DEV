@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sumit Weather App</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #6dd5fa, #2980b9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      color: #333;
+      flex-direction: column;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      text-align: center;
+      width: 340px;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 15px;
+      color: #2980b9;
+    }
+
+    .temp {
+      font-size: 50px;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #2c3e50;
+      animation: pop 0.6s ease;
+    }
+
+    input {
+      padding: 10px;
+      width: 70%;
+      border: none;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 10px;
+      background: #2980b9;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #1f6391;
+    }
+
+    footer {
+      margin-top: 20px;
+      font-size: 13px;
+      color: white;
+      opacity: 0.8;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.8); opacity: 0.5; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🌤 Weather App</h1>
+    <input type="text" id="cityInput" placeholder="Enter city...">
+    <button onclick="getCityWeather()">Search</button>
+    <p id="status">Fetching location...</p>
+    <div id="weather"></div>
+  </div>
+
+  <footer>
+    © All rights reserved by <b>Sumit | TCOER Dev</b>
+  </footer>
+
+  <script>
+    const status = document.getElementById("status");
+    const weatherDiv = document.getElementById("weather");
+
+    // Fetch weather by coordinates
+    function getWeather(lat, lon) {
+      const apiKey = "YOUR_OPENWEATHERMAP_API_KEY"; // Replace with your key
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+
+      fetchWeather(url);
+    }
+
+    // Fetch weather by city
+    function getCityWeather() {
+      const city = document.getElementById("cityInput").value;
+      if (!city) return;
+      const apiKey = "YOUR_OPENWEATHERMAP_API_KEY"; // Replace with your key
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+
+      fetchWeather(url);
+    }
+
+    // Fetch weather data
+    function fetchWeather(url) {
+      status.textContent = "Loading...";
+      weatherDiv.innerHTML = "";
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (data.cod === "404") {
+            status.textContent = "City not found.";
+            return;
+          }
+
+          status.textContent = data.name;
+          weatherDiv.innerHTML = `
+            <p>${data.weather[0].description.toUpperCase()}</p>
+            <p class="temp">${Math.round(data.main.temp)}°C</p>
+            <p>💧 Humidity: ${data.main.humidity}%</p>
+            <p>🌬 Wind: ${data.wind.speed} m/s</p>
+          `;
+        })
+        .catch(() => {
+          status.textContent = "Unable to fetch weather.";
+        });
+    }
+
+    // Auto detect location
+    function geoSuccess(position) {
+      getWeather(position.coords.latitude, position.coords.longitude);
+    }
+
+    function geoError() {
+      status.textContent = "Unable to retrieve your location. Try search.";
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(geoSuccess, geoError);
+    } else {
+      status.textContent = "Geolocation not supported.";
+    }
+  </script>
+</body>
+</html>

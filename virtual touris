@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Tourist Guide & AI Art Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 
+        ====================================================================
+        === CRITICAL STEP: ADD YOUR GOOGLE MAPS API KEY HERE ===
+        ====================================================================
+        The map will NOT work without a valid API key.
+        1. Go to the Google Cloud Console: https://console.cloud.google.com/
+        2. Create a project.
+        3. Enable the "Maps JavaScript API".
+        4. Go to "APIs & Services" > "Credentials" and create an API key.
+        5. Replace 'YOUR_API_KEY' in the line below with your new key.
+        ====================================================================
+    -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap&onerror=gm_authFailure" async defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #FFF8F0; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
+        .hero-bg { background-image: url('https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071&auto=format&fit=crop'); background-size: cover; background-position: center; }
+        .fade-in-section { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        .fade-in-section.is-visible { opacity: 1; transform: translateY(0); }
+        #map-container { position: relative; height: 600px; }
+        #map { height: 100%; width: 100%; border-radius: 0.75rem; }
+        #map-error-overlay { position: absolute; inset: 0; background-color: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 1rem; border-radius: 0.75rem; }
+        .timeline-item { position: relative; padding-left: 2.5rem; padding-bottom: 2rem; border-left: 2px solid #f59e0b; }
+        .timeline-item:last-child { border-left: 2px solid transparent; padding-bottom: 0; }
+        .timeline-dot { position: absolute; left: -10px; top: 0; height: 20px; width: 20px; background-color: #d97706; border-radius: 50%; border: 3px solid #fffaf0; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #d97706; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .custom-form { background-color: #fffaf0; border-color: #fde68a; transition: all 0.3s ease; }
+        .custom-form:focus { --tw-ring-color: #f59e0b; border-color: #f59e0b; }
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-content { transition: transform 0.3s ease; }
+        #virtual-guide { transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out; }
+    </style>
+</head>
+<body>
+    <!-- =================================== -->
+    <!-- ========= AUTH MODALS ============= -->
+    <!-- =================================== -->
+    <div id="auth-modal" class="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 hidden modal-overlay opacity-0">
+        <div class="modal-content transform -translate-y-10 bg-white rounded-lg shadow-xl w-full max-w-md">
+            <!-- Login Form -->
+            <div id="login-form-container">
+                <form id="login-form" class="p-8">
+                    <h2 class="text-2xl font-bold text-amber-900 font-playfair mb-2">Welcome Back</h2>
+                    <p class="text-gray-600 mb-6">Log in to access your saved places and routes.</p>
+                    <div id="login-error" class="text-red-600 text-sm mb-4"></div>
+                    <div class="space-y-4">
+                        <input type="email" id="login-email" class="w-full p-3 rounded border custom-form" placeholder="Email Address" required>
+                        <input type="password" id="login-password" class="w-full p-3 rounded border custom-form" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="w-full mt-6 bg-amber-800 text-white py-3 rounded-lg font-semibold hover:bg-amber-900 transition">Log In</button>
+                    <p class="text-center text-sm text-gray-600 mt-4">Don't have an account? <a href="#" id="show-signup" class="font-semibold text-amber-700 hover:underline">Sign Up</a></p>
+                </form>
+            </div>
+            <!-- Signup Form -->
+            <div id="signup-form-container" class="hidden">
+                <form id="signup-form" class="p-8">
+                    <h2 class="text-2xl font-bold text-amber-900 font-playfair mb-2">Create an Account</h2>
+                    <p class="text-gray-600 mb-6">Join to save your discoveries and plan your trips.</p>
+                     <div id="signup-error" class="text-red-600 text-sm mb-4"></div>
+                    <div class="space-y-4">
+                        <input type="email" id="signup-email" class="w-full p-3 rounded border custom-form" placeholder="Email Address" required>
+                        <input type="password" id="signup-password" class="w-full p-3 rounded border custom-form" placeholder="Password (min. 6 characters)" required>
+                    </div>
+                    <button type="submit" class="w-full mt-6 bg-amber-800 text-white py-3 rounded-lg font-semibold hover:bg-amber-900 transition">Sign Up</button>
+                    <p class="text-center text-sm text-gray-600 mt-4">Already have an account? <a href="#" id="show-login" class="font-semibold text-amber-700 hover:underline">Log In</a></p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================================== -->
+    <!-- ===== CULTURAL HERITAGE PAGE ===== -->
+    <!-- =================================== -->
+    <div id="heritage-page">
+        <!-- Header & Nav -->
+        <header class="hero-bg h-screen flex flex-col relative">
+            <nav class="absolute top-0 left-0 right-0 p-4 z-20 bg-gradient-to-b from-black/50 to-transparent">
+                <div class="container mx-auto flex justify-between items-center">
+                    <a href="#" class="text-white text-xl font-bold font-playfair">India Explored</a>
+                    <div class="hidden md:flex items-center space-x-6 text-white">
+                        <a href="#timeline-section" class="hover:text-amber-300 transition">Timeline</a>
+                        <a href="#virtual-guide-section" class="hover:text-amber-300 transition">Virtual Guide</a>
+                        <a href="#ai-studio-section" class="hover:text-amber-300 transition">AI Studio</a>
+                    </div>
+                    <div id="auth-links" class="space-x-2">
+                        <button id="login-btn" class="bg-white/20 text-white py-2 px-4 rounded-lg hover:bg-white/30 transition">Login</button>
+                        <button id="signup-btn" class="bg-amber-600 text-white py-2 px-4 rounded-lg hover:bg-amber-700 transition">Sign Up</button>
+                    </div>
+                    <div id="user-info" class="hidden items-center space-x-4">
+                        <span id="user-email" class="text-white"></span>
+                        <button id="logout-btn" class="bg-white/20 text-white py-2 px-4 rounded-lg hover:bg-white/30 transition">Logout</button>
+                    </div>
+                </div>
+            </nav>
+            <div class="flex-grow flex items-center justify-center text-white text-center">
+                <div class="relative z-10 p-4">
+                    <h1 class="text-5xl md:text-7xl font-playfair font-bold">Incredible India</h1>
+                    <p class="mt-4 text-lg md:text-xl max-w-2xl mx-auto">Discover a land of vibrant cultures, ancient traditions, and timeless heritage.</p>
+                </div>
+            </div>
+            <div class="absolute inset-0 bg-black/60"></div>
+        </header>
+
+        <main class="bg-[#FFF8F0]">
+            
+            <!-- Historical Timeline Section -->
+            <section id="timeline-section" class="py-16 md:py-24 fade-in-section">
+                <div class="container mx-auto px-4">
+                    <div class="text-center mb-12">
+                         <h2 class="text-4xl font-playfair font-bold text-amber-900">A Journey Through Time</h2>
+                         <p class="mt-4 max-w-3xl mx-auto text-gray-700">Witness the milestones of a civilization that has shaped the world for millennia.</p>
+                    </div>
+                    <div class="max-w-3xl mx-auto">
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <h3 class="font-bold text-xl text-amber-800">c. 2500 BCE: Indus Valley Civilization</h3>
+                            <p class="text-gray-600 mt-1">One of the world's earliest urban civilizations, known for advanced city planning.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <h3 class="font-bold text-xl text-amber-800">c. 273-232 BCE: The Mauryan Empire</h3>
+                            <p class="text-gray-600 mt-1">Under Emperor Ashoka, the empire unites most of the Indian subcontinent.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <h3 class="font-bold text-xl text-amber-800">c. 320-550 CE: The Gupta Empire</h3>
+                            <p class="text-gray-600 mt-1">Known as the "Golden Age of India," a period of great scientific and cultural advancements.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <h3 class="font-bold text-xl text-amber-800">1947 CE: Independence</h3>
+                            <p class="text-gray-600 mt-1">India achieves independence, marking the birth of the world's largest democracy.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Virtual Guide Section -->
+            <section id="virtual-guide-section" class="py-16 md:py-20 bg-amber-100/50 border-y border-amber-200/80 fade-in-section">
+                <div class="container mx-auto px-4">
+                    <div class="text-center mb-12">
+                        <svg class="w-16 h-16 text-amber-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.5-11.5-1.5 1.5m1.5-1.5-1.5-1.5M12 3v18m-4.5-15-1.5 1.5m1.5-1.5-1.5-1.5m9 15-1.5-1.5m1.5 1.5 1.5-1.5M5.25 9v1.5m13.5-1.5v1.5m-6.75 3.75h1.5m-1.5-1.5h1.5m-1.5-1.5h1.5m-1.5-1.5h1.5M9 12.75h1.5m-1.5-1.5h1.5m-1.5-1.5h1.5m-1.5-1.5h1.5m6 3.75h1.5m-1.5-1.5h1.5m-1.5-1.5h1.5m-1.5-1.5h1.5" /></svg>
+                        <h2 class="text-4xl font-playfair font-bold text-amber-900 mt-4">Become Your Own Tour Guide</h2>
+                        <p class="mt-4 max-w-3xl mx-auto text-gray-700">Plan routes, discover hidden gems, and get historical insights from our virtual AI guide.</p>
+                    </div>
+                    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                        <div class="lg:col-span-1 bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-lg">
+                             <h3 class="text-2xl font-bold text-amber-900 font-playfair">Plan Your Trip</h3>
+                            <div class="mt-4 space-y-4">
+                                <div>
+                                    <label for="start-location" class="block text-sm font-medium text-gray-700">Start</label>
+                                    <input type="text" id="start-location-guide" class="custom-form mt-1 block w-full rounded-md border-2 shadow-sm p-2" placeholder="e.g., Delhi">
+                                </div>
+                                <div>
+                                    <label for="end-location" class="block text-sm font-medium text-gray-700">Destination</label>
+                                    <input type="text" id="end-location-guide" class="custom-form mt-1 block w-full rounded-md border-2 shadow-sm p-2" placeholder="e.g., Agra">
+                                </div>
+                                <div>
+                                    <button id="get-directions-btn-guide" class="w-full bg-amber-800 text-white py-2 px-4 rounded-lg font-semibold hover:bg-amber-900 transition">Get Directions</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="map-container" class="lg:col-span-2 shadow-lg rounded-lg">
+                            <div id="map"></div>
+                             <div id="map-error-overlay" class="hidden">
+                                <h3 class="text-2xl font-bold text-red-600">Map Error: Invalid API Key</h3>
+                                <a href="https://console.cloud.google.com/" target="_blank" class="mt-4 inline-block bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Get API Key</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- AI Art Studio Section -->
+            <section id="ai-studio-section" class="py-16 md:py-24 fade-in-section">
+                <div class="container mx-auto px-4">
+                     <div class="text-center mb-12">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.572L16.25 22.5l-.648-1.928a2.25 2.25 0 01-1.44-1.442L12 18.75l1.928-.648a2.25 2.25 0 011.44 1.442z" /></svg>
+                        <h2 class="text-4xl font-playfair font-bold text-amber-900 mt-4">Create with AI</h2>
+                        <p class="mt-4 max-w-3xl mx-auto text-gray-700">Use generative AI to create beautiful artwork inspired by traditional Indian styles.</p>
+                    </div>
+                    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-gray-200/80 p-8 md:p-12 grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center mx-auto">
+                        <div class="flex flex-col h-full">
+                            <div class="flex-grow space-y-6">
+                                <div>
+                                    <div class="flex justify-between items-center">
+                                        <label for="prompt" class="flex items-center text-lg font-semibold text-amber-800"><span class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-800 font-bold mr-3">1</span>Describe Vision</label>
+                                        <button id="surprise-btn" class="text-sm font-semibold text-amber-700 hover:text-amber-900 transition">Surprise Me ✨</button>
+                                    </div>
+                                    <textarea id="prompt" rows="3" class="custom-form mt-2 block w-full rounded-md border-2 shadow-sm focus:ring-2 p-3" placeholder="e.g., A peacock dancing in the rain..."></textarea>
+                                    <p id="prompt-error" class="text-red-600 text-sm mt-1 h-4"></p>
+                                </div>
+                                <div>
+                                    <label for="style" class="flex items-center text-lg font-semibold text-amber-800"><span class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-800 font-bold mr-3">2</span>Choose Style</label>
+                                    <select id="style" class="custom-form mt-2 block w-full rounded-md border-2 shadow-sm focus:ring-2 p-3"><option value="madhubani">Madhubani</option><option value="kalamkari">Kalamkari</option><option value="warli">Warli</option><option value="pattachitra">Pattachitra</option><option value="gond">Gond</option><option value="miniature">Miniature Painting</option></select>
+                                </div>
+                            </div>
+                            <button id="generate-btn" class="w-full bg-gradient-to-r from-amber-700 to-amber-900 text-white font-bold py-3 px-4 rounded-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform text-lg shadow-lg mt-8">Generate Art</button>
+                        </div>
+                        <div id="image-container" class="w-full h-80 lg:h-full bg-amber-50 rounded-lg flex items-center justify-center border-2 border-amber-200/80 relative overflow-hidden shadow-inner p-2">
+                            <div id="loader" class="loader hidden"></div>
+                            <img id="generated-image" src="" alt="AI generated art" class="hidden w-full h-full object-contain rounded-md transition-opacity duration-500">
+                            <div id="placeholder-text" class="text-amber-700 text-center p-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-amber-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
+                                <p class="mt-4 font-semibold text-lg">Art appears here</p><p class="text-sm text-amber-600">Let your imagination flow</p>
+                            </div>
+                            <p id="error-message" class="hidden text-red-600 font-medium p-4 text-center"></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+    
+    <!-- Virtual Guide Character -->
+    <div id="virtual-guide" class="fixed bottom-5 right-5 w-48 h-64 bg-amber-200 rounded-t-full rounded-b-lg p-4 flex flex-col items-center justify-end border-4 border-amber-800 shadow-2xl opacity-0 transform translate-y-full z-30">
+        <svg class="w-24 h-24 text-amber-900" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        <div id="guide-text" class="mt-2 text-center text-sm font-semibold text-amber-900 bg-white/70 rounded-lg p-2">Hello! Click a spot to learn more.</div>
+    </div>
+    <audio id="guide-audio" class="hidden"></audio>
+
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      
+      const firebaseConfig = {
+        apiKey: "YOUR_FIREBASE_API_KEY", authDomain: "YOUR_AUTH_DOMAIN", projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET", messagingSenderId: "YOUR_MESSAGING_SENDER_ID", appId: "YOUR_APP_ID"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      
+      // --- Auth UI & State Management ---
+      const authModal = document.getElementById('auth-modal');
+      const authLinks = document.getElementById('auth-links');
+      const userInfo = document.getElementById('user-info');
+      const userEmailSpan = document.getElementById('user-email');
+      
+      const showModal = (isLogin) => {
+          authModal.classList.remove('hidden');
+          setTimeout(() => {
+              authModal.classList.remove('opacity-0');
+              authModal.querySelector('.modal-content').classList.remove('-translate-y-10');
+          }, 10);
+          authModal.querySelector('#login-form-container').classList.toggle('hidden', !isLogin);
+          authModal.querySelector('#signup-form-container').classList.toggle('hidden', isLogin);
+      };
+
+      const hideModal = () => {
+          authModal.classList.add('opacity-0');
+          authModal.querySelector('.modal-content').classList.add('-translate-y-10');
+          setTimeout(() => authModal.classList.add('hidden'), 300);
+      };
+
+      document.getElementById('login-btn').addEventListener('click', () => showModal(true));
+      document.getElementById('signup-btn').addEventListener('click', () => showModal(false));
+      document.getElementById('show-signup').addEventListener('click', (e) => { e.preventDefault(); showModal(false); });
+      document.getElementById('show-login').addEventListener('click', (e) => { e.preventDefault(); showModal(true); });
+      authModal.addEventListener('click', (e) => { if (e.target === authModal) hideModal(); });
+      
+      onAuthStateChanged(auth, user => {
+          if (user) {
+              authLinks.classList.add('hidden');
+              userInfo.classList.remove('hidden');
+              userEmailSpan.textContent = user.email;
+              hideModal();
+          } else {
+              authLinks.classList.remove('hidden');
+              userInfo.classList.add('hidden');
+              userEmailSpan.textContent = '';
+          }
+      });
+
+      document.getElementById('signup-form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const email = document.getElementById('signup-email').value;
+          const password = document.getElementById('signup-password').value;
+          const errorDiv = document.getElementById('signup-error');
+          errorDiv.textContent = '';
+          createUserWithEmailAndPassword(auth, email, password).catch(error => { errorDiv.textContent = error.message; });
+      });
+
+      document.getElementById('login-form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const email = document.getElementById('login-email').value;
+          const password = document.getElementById('login-password').value;
+          const errorDiv = document.getElementById('login-error');
+          errorDiv.textContent = '';
+          signInWithEmailAndPassword(auth, email, password).catch(error => { errorDiv.textContent = error.message; });
+      });
+
+      document.getElementById('logout-btn').addEventListener('click', () => { signOut(auth); });
+
+      // --- Virtual Guide Logic ---
+      const virtualGuide = document.getElementById('virtual-guide');
+      const guideText = document.getElementById('guide-text');
+      const guideAudio = document.getElementById('guide-audio');
+      let currentAudio = null;
+
+      // --- NEW: TTS Narration Functionality ---
+      const ttsApiKey = ""; // API key is handled by the environment
+      const ttsApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${ttsApiKey}`;
+
+      // Converts Base64 to ArrayBuffer
+      const base64ToArrayBuffer = (base64) => {
+          const binaryString = window.atob(base64);
+          const len = binaryString.length;
+          const bytes = new Uint8Array(len);
+          for (let i = 0; i < len; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+          }
+          return bytes.buffer;
+      };
+
+      // Creates a WAV file from raw PCM data
+      const pcmToWav = (pcmData, sampleRate) => {
+          const numChannels = 1;
+          const bitsPerSample = 16;
+          const byteRate = sampleRate * numChannels * bitsPerSample / 8;
+          const blockAlign = numChannels * bitsPerSample / 8;
+          const dataSize = pcmData.length * 2;
+          const buffer = new ArrayBuffer(44 + dataSize);
+          const view = new DataView(buffer);
+
+          // RIFF header
+          view.setUint32(0, 0x52494646, false); // "RIFF"
+          view.setUint32(4, 36 + dataSize, true);
+          view.setUint32(8, 0x57415645, false); // "WAVE"
+          // "fmt " sub-chunk
+          view.setUint32(12, 0x666d7420, false); // "fmt "
+          view.setUint32(16, 16, true); // Subchunk1Size
+          view.setUint16(20, 1, true); // AudioFormat
+          view.setUint16(22, numChannels, true);
+          view.setUint32(24, sampleRate, true);
+          view.setUint32(28, byteRate, true);
+          view.setUint16(32, blockAlign, true);
+          view.setUint16(34, bitsPerSample, true);
+          // "data" sub-chunk
+          view.setUint32(36, 0x64617461, false); // "data"
+          view.setUint32(40, dataSize, true);
+
+          // Write PCM data
+          const pcm16 = new Int16Array(pcmData);
+          for (let i = 0; i < pcm16.length; i++) {
+              view.setInt16(44 + i * 2, pcm16[i], true);
+          }
+          return new Blob([view], { type: 'audio/wav' });
+      };
+      
+      const generateNarration = async (text) => {
+          const payload = {
+              contents: [{ parts: [{ text: `Say in a clear, friendly voice: ${text}` }] }],
+              generationConfig: {
+                  responseModalities: ["AUDIO"],
+                  speechConfig: {
+                      voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } }
+                  }
+              },
+              model: "gemini-2.5-flash-preview-tts"
+          };
+          const response = await fetch(ttsApiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          if (!response.ok) throw new Error(`TTS API error! status: ${response.status}`);
+          
+          const result = await response.json();
+          const part = result?.candidates?.[0]?.content?.parts?.[0];
+          const audioData = part?.inlineData?.data;
+          const mimeType = part?.inlineData?.mimeType;
+
+          if (audioData && mimeType && mimeType.startsWith("audio/")) {
+              const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+              const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+              const pcmData = base64ToArrayBuffer(audioData);
+              const pcm16 = new Int16Array(pcmData);
+              const wavBlob = pcmToWav(pcm16, sampleRate);
+              return URL.createObjectURL(wavBlob);
+          } else {
+              throw new Error("Invalid audio data in response.");
+          }
+      };
+      
+      const showGuide = async (location) => {
+          if (currentAudio) {
+              currentAudio.pause();
+              currentAudio.currentTime = 0;
+          }
+          guideText.textContent = `Generating audio for ${location.title}...`;
+          virtualGuide.classList.remove('opacity-0', 'translate-y-full');
+          
+          try {
+              const narrationText = `${location.title}. ${location.info}`;
+              const audioUrl = await generateNarration(narrationText);
+              guideText.textContent = location.info;
+              currentAudio = guideAudio;
+              currentAudio.src = audioUrl;
+              currentAudio.play();
+          } catch (error) {
+              console.error("Failed to generate narration:", error);
+              guideText.textContent = "Sorry, audio narration is currently unavailable.";
+          }
+      };
+      const hideGuide = () => { 
+          if(currentAudio) {
+              currentAudio.pause();
+              currentAudio.currentTime = 0;
+          }
+          virtualGuide.classList.add('opacity-0', 'translate-y-full'); 
+      };
+
+      // --- AI Art Studio Logic ---
+        const generateBtn = document.getElementById('generate-btn');
+        const promptInput = document.getElementById('prompt');
+        const promptError = document.getElementById('prompt-error');
+        const styleSelect = document.getElementById('style');
+        const loader = document.getElementById('loader');
+        const generatedImage = document.getElementById('generated-image');
+        const placeholderText = document.getElementById('placeholder-text');
+        const errorMessage = document.getElementById('error-message');
+        const surpriseBtn = document.getElementById('surprise-btn');
+        const imageGenApiKey = "";
+        const imageGenApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${imageGenApiKey}`;
+
+        const styleGuides = {
+            madhubani: "in the intricate Madhubani style...",
+            kalamkari: "in the traditional Kalamkari style...",
+            warli: "in the minimalist Warli folk art style...",
+            pattachitra: "in the classic Pattachitra scroll painting style...",
+            gond: "in the vibrant Gond art style...",
+            miniature: "in the detailed Indian Miniature Painting style...",
+        };
+        const surprisePrompts = ["A royal Bengal tiger...", "A Kathak dancer...", "Varanasi at sunrise..."];
+        surpriseBtn.addEventListener('click', () => {
+            promptInput.value = surprisePrompts[Math.floor(Math.random() * surprisePrompts.length)];
+        });
+        const generateImageWithRetry = async (finalPrompt, retries = 3, delay = 1000) => {
+             for (let i = 0; i < retries; i++) {
+                try {
+                    const payload = { contents: [{ parts: [{ text: finalPrompt }] }], generationConfig: { responseModalities: ['IMAGE'] } };
+                    const response = await fetch(imageGenApiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                    if (base64Data) return `data:image/png;base64,${base64Data}`;
+                    else throw new Error("Invalid API response.");
+                } catch (error) {
+                    if (i === retries - 1) throw error;
+                    await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
+                }
+            }
+             throw new Error("Image generation failed.");
+        };
+        generateBtn.addEventListener('click', async () => {
+            if (!promptInput.value.trim()) { 
+                promptInput.classList.add('shake', 'border-red-500');
+                promptError.textContent = 'Please describe your vision.';
+                setTimeout(() => { 
+                    promptInput.classList.remove('shake', 'border-red-500');
+                    promptError.textContent = '';
+                }, 1500);
+                return; 
+            }
+            loader.classList.remove('hidden');
+            placeholderText.classList.add('hidden');
+            generatedImage.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Generating...';
+            const finalPrompt = `A high-resolution image of ${promptInput.value.trim()}, ${styleGuides[styleSelect.value]}. No text, watermarks, or signatures.`;
+            try {
+                const imageUrl = await generateImageWithRetry(finalPrompt);
+                generatedImage.src = imageUrl;
+                generatedImage.classList.remove('hidden');
+            } catch (error) {
+                errorMessage.textContent = "Could not generate image.";
+                errorMessage.classList.remove('hidden');
+            } finally {
+                loader.classList.add('hidden');
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Generate Art';
+            }
+        });
+
+
+      // --- Google Maps Logic ---
+      window.gm_authFailure = function() {
+          document.getElementById('map-error-overlay').classList.remove('hidden');
+      };
+      
+      window.initMap = function() {
+          const india = { lat: 20.5937, lng: 78.9629 };
+          const map = new google.maps.Map(document.getElementById("map"), { zoom: 5, center: india });
+          const locations = [
+            { position: { lat: 28.6129, lng: 77.2295 }, title: "Sunder Nursery, Delhi", info: "A restored 16th-century heritage park with beautiful monuments, gardens, and water features." },
+            { position: { lat: 18.9220, lng: 72.8347 }, title: "Warli Art Region, Maharashtra", info: "This region is the home of the indigenous Warli tribe, known for their iconic, geometric folk art." },
+            { position: { lat: 27.1751, lng: 78.0421 }, title: "Taj Mahal, Agra", info: "An ivory-white marble mausoleum on the south bank of the Yamuna river, and a universally admired masterpiece of world heritage." }
+          ];
+          const infowindow = new google.maps.InfoWindow();
+          locations.forEach(loc => {
+              const marker = new google.maps.Marker({ position: loc.position, map: map, title: loc.title, animation: google.maps.Animation.DROP });
+              marker.addListener('click', () => {
+                  infowindow.setContent(`<div class="p-2 font-sans"><h3 class="font-bold text-amber-800">${loc.title}</h3><p>${loc.info}</p></div>`);
+                  infowindow.open(map, marker);
+                  showGuide(loc); 
+              });
+          });
+          map.addListener('click', hideGuide);
+      };
+
+      // --- Fade In On Scroll ---
+        const faders = document.querySelectorAll('.fade-in-section');
+        const appearOptions = { threshold: 0.2, rootMargin: "0px 0px -100px 0px" };
+        const appearOnScroll = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            });
+        }, appearOptions);
+        faders.forEach(fader => appearOnScroll.observe(fader));
+    </script>
+</body>
+</html>
+

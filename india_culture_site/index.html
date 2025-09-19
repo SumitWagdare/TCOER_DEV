@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Incredible India - Cultural Heritage</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAOVYRIgupAurZup5y1PRh8Ismb1A3lLao&libraries=places&callback=initMap" async defer></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; }
+    .hero { background: url('https://source.unsplash.com/1600x600/?india,culture') no-repeat center/cover; }
+    .carousel { display: flex; transition: transform 1s ease-in-out; }
+    .carousel img { width: 100%; height: 400px; object-fit: cover; border-radius: 1rem; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <section class="hero h-screen flex items-center justify-center text-white text-center">
+    <div class="bg-black bg-opacity-50 p-10 rounded-xl">
+      <h1 class="text-5xl font-bold">🌏 Incredible India</h1>
+      <p class="mt-4 text-lg">Explore Heritage • Culture • Festivals • Food • Music • Artisans</p>
+      <a href="#map" class="mt-6 inline-block bg-yellow-400 text-black px-6 py-3 rounded-xl font-semibold hover:bg-yellow-300">Start Exploring</a>
+    </div>
+  </section>
+
+  <section id="map" class="p-10">
+    <h2 class="text-3xl font-bold mb-4">🗺️ Explore States & Heritage Sites</h2>
+    <div id="indiaMap" class="h-[500px] rounded-xl shadow-lg"></div>
+  </section>
+
+  <section class="p-10 bg-white">
+    <h2 class="text-3xl font-bold mb-4">🚆 Heritage Trip Planner (400km)</h2>
+    <input id="location" type="text" placeholder="Enter your location" class="border p-3 w-80 rounded"/>
+    <button onclick="planTrip()" class="ml-2 bg-green-500 text-white px-4 py-2 rounded">Find Heritage Sites</button>
+    <div id="tripResults" class="mt-4 text-lg text-gray-700"></div>
+  </section>
+
+  <section class="p-10 bg-gray-100">
+    <h2 class="text-3xl font-bold mb-6 text-center">🎉 Festivals of India</h2>
+    <div class="relative max-w-4xl mx-auto overflow-hidden rounded-2xl shadow-xl">
+      <div id="carousel" class="carousel">
+        <img src="festivals/diwali.jpg" alt="Diwali">
+        <img src="festivals/holi.jpg" alt="Holi">
+        <img src="festivals/ganesh.jpg" alt="Ganesh Chaturthi">
+        <img src="festivals/navratri.jpg" alt="Navratri">
+        <img src="festivals/christmas.jpg" alt="Christmas">
+        <img src="festivals/eid.jpg" alt="Eid">
+      </div>
+    </div>
+  </section>
+
+  <section class="p-10">
+    <h2 class="text-3xl font-bold mb-6">🏛️ Virtual Museum</h2>
+    <iframe src="https://www.google.com/maps/embed?pb=!4v163343" class="w-full h-[400px] rounded-xl"></iframe>
+  </section>
+
+  <section class="p-10 bg-gray-50">
+    <h2 class="text-3xl font-bold mb-6">👗 Regional Attire Gallery + Transcripts</h2>
+    <input type="file" accept="image/*" class="mb-4"/>
+    <button class="bg-blue-500 text-white px-4 py-2 rounded">Upload & Transcribe</button>
+  </section>
+
+  <section class="p-10">
+    <h2 class="text-3xl font-bold mb-6">🍲 Traditional Recipes</h2>
+    <ul class="list-disc ml-6">
+      <li>Biryani</li>
+      <li>Idli & Dosa</li>
+      <li>Dal Baati Churma</li>
+    </ul>
+  </section>
+
+  <section class="p-10 bg-gray-100">
+    <h2 class="text-3xl font-bold mb-6">🎵 Music & Dance</h2>
+    <audio controls>
+      <source src="music/classical.mp3" type="audio/mpeg">
+    </audio>
+  </section>
+
+  <section class="p-10">
+    <h2 class="text-3xl font-bold mb-6">🕹️ Play a Cultural Quiz</h2>
+    <button class="bg-purple-500 text-white px-6 py-2 rounded">Start Quiz</button>
+  </section>
+
+  <section class="p-10 bg-gray-50">
+    <h2 class="text-3xl font-bold mb-6">🛍️ Artisan Shop</h2>
+    <p>Handicrafts, Paintings, Sarees, Jewelry</p>
+  </section>
+
+  <footer class="bg-black text-white text-center p-6">
+    <p>© 2025 Incredible India | Cultural Heritage Showcase</p>
+  </footer>
+
+  <script>
+    function initMap() {
+      const map = new google.maps.Map(document.getElementById("indiaMap"), {
+        zoom: 5,
+        center: { lat: 20.5937, lng: 78.9629 }
+      });
+    }
+
+    function planTrip() {
+      document.getElementById("tripResults").innerHTML =
+        "Nearest Heritage Sites within 400km: Taj Mahal, Ajanta Caves, Khajuraho Temples";
+    }
+
+    let index = 0;
+    const carousel = document.getElementById("carousel");
+    const totalSlides = carousel.children.length;
+    setInterval(() => {
+      index = (index + 1) % totalSlides;
+      carousel.style.transform = `translateX(-${index * 100}%)`;
+    }, 3000);
+  </script>
+</body>
+</html>
